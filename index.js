@@ -1,8 +1,9 @@
 var express = require('express');
 var nodemailer = require('nodemailer');
+var ejs = require('ejs');
 
 var app = express();
-var PORT = 3000;
+var PORT = process.env.PORT || 80;
 
 app.use(express.json());
 	
@@ -28,14 +29,32 @@ const transporter = nodemailer.createTransport({
     secure: false,
 });
 
+app.get('/', function(req, res, next) {
+    res.render('index', { title: 'Express' });
+});
+  
+app.get('/products', function(req, res, next) {
+    let products = [
+      {id:1, category:"phone", name:"samsung", model:"gt100"},
+      {id:2, category:"phone", name:"iphone", model:"12"},
+      {id:2, category:"tv", name:"mi", model:"4A"}
+  ];
+    res.status(200).json(products);
+});
+
 app.post('/text-mail', (req, res) => {
     const {to, subject, text } = req.body;
+    let languages = ['java', 'javascript', '.NET', 'python', 'go'];
+    let mailBody = ejs.render('<html><body><h1>Hello <%=to%> - Top languages to learn: <%= languages.join(" | "); %></h1></body></html>', {to: to, languages: languages});
+
+    console.log('mailBody: '+mailBody);
+    
     const mailData = {
-        from: 'noreply@gmail.com',
+        from: 'noreply@evoketechnologies.com',
         to: to,
         subject: subject,
         text: text,
-        html: '<b>'+text+'<br/>',
+        html: mailBody,
     };
 
     transporter.sendMail(mailData, (error, info) => {
@@ -44,6 +63,14 @@ app.post('/text-mail', (req, res) => {
         }
         res.status(200).send({ message: "Mail send", message_id: info.messageId });
     });
+});
+
+app.get('/template', (req, res) => {   
+    let languages = ['java', 'javascript', '.NET', 'python', 'go'];
+    let html = ejs.render('<html><body><h1>Top languages to learn: <%= languages.join(" | "); %></h1></body></html>', {languages: languages});
+
+    console.log('html: '+html);
+    res.status(200).send(html);
 });
 
 
